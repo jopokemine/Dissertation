@@ -1,6 +1,3 @@
-
-
-# Prints lines from a file.
 def printLines(file, n=10):
     """Print n number of lines from a file
 
