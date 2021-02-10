@@ -33,7 +33,7 @@ printLines(os.path.join(corpus, "movie_lines.txt"))
 
 
 # Define path to new file
-datafile = os.path.join("data", "formatted_lines-260121-123213.txt")
+datafile = os.path.join("data", "formatted_lines_qa.txt")
 
 # Print a sample of lines
 print("\nSample lines from file:")
@@ -134,7 +134,14 @@ def filterPair(p):
 
 # Filter pairs using filterPair condition
 def filterPairs(pairs):
-    return [pair for pair in pairs if filterPair(pair)]
+    filtered_pairs = []
+    for pair in pairs:
+        try:
+            if filterPair(pair):
+                filtered_pairs.append(pair)
+        except IndexError:
+            continue  # Ignore 'pairs' that don't have two items
+    return filtered_pairs
 
 
 # Using the functions defined above, return a populated voc object and pairs list
@@ -588,10 +595,10 @@ batch_size = 64
 
 # Set checkpoint to load from; set to None if starting from scratch
 loadFilename = None
-checkpoint_iter = 4000
+checkpoint_iter = 1000
 # loadFilename = os.path.join(save_dir, model_name, corpus_name,
-#                            '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, hidden_size),
-#                            '{}_checkpoint.tar'.format(checkpoint_iter))
+#                             '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, hidden_size),
+#                             '{}_checkpoint.tar'.format(checkpoint_iter))
 
 
 # Load model if a loadFilename is provided
@@ -633,9 +640,9 @@ clip = 50.0
 teacher_forcing_ratio = 1.0
 learning_rate = 0.0001
 decoder_learning_ratio = 5.0
-n_iteration = 500
+n_iteration = 1000
 print_every = 1
-save_every = 50
+save_every = 500
 
 # Ensure dropout layers are in train mode
 encoder.train()
@@ -650,15 +657,15 @@ if loadFilename:
     decoder_optimizer.load_state_dict(decoder_optimizer_sd)
 
 # If you have cuda, configure cuda to call
-for state in encoder_optimizer.state.values():
-    for k, v in state.items():
-        if isinstance(v, torch.Tensor):
-            state[k] = v.cuda()
+# for state in encoder_optimizer.state.values():
+#     for k, v in state.items():
+#         if isinstance(v, torch.Tensor):
+#             state[k] = v.cuda()
 
-for state in decoder_optimizer.state.values():
-    for k, v in state.items():
-        if isinstance(v, torch.Tensor):
-            state[k] = v.cuda()
+# for state in decoder_optimizer.state.values():
+#     for k, v in state.items():
+#         if isinstance(v, torch.Tensor):
+#             state[k] = v.cuda()
 
 # Run training iterations
 print("Starting Training!")
