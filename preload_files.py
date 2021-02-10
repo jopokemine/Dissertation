@@ -4,14 +4,12 @@ import csv
 import codecs
 import json
 import re
-from datetime import datetime
-# from config import data
+from itertools import chain
 
 
 ############################################
 # Generic                                  #
 ############################################
-
 
 def load_files(*filepaths, open_func=open, line_eval_func=None):
     for file in filepaths:
@@ -19,6 +17,15 @@ def load_files(*filepaths, open_func=open, line_eval_func=None):
         with open_func(file) as f:
             for line in f:
                 yield line if line_eval_func is None else line_eval_func(line)
+
+
+def load_tsv_files(*filepaths, delimiter=','):
+    for file in filepaths:
+        print(f"    Loading {file.split('/')[-1]}...")
+        with open(file) as f:
+            read_csv = csv.reader(f, delimiter=delimiter)
+            for line in read_csv:
+                yield line
 
 
 def load_csv_files(*filepaths, delimiter=','):
@@ -32,52 +39,51 @@ def load_csv_files(*filepaths, delimiter=','):
                 except UnicodeDecodeError:
                     continue  # Ignore any lines with non-decodable strings in
                 lines.append(line)
-
             csv_reader = csv.DictReader(lines, delimiter=delimiter)
             for row in csv_reader:
                 yield row
 
 
-def write_pairs_from_iter_to_file(datafile: str, pair_iter):
-    delimiter = '\t'
-    # Unescape the delimiter
-    delimiter = str(codecs.decode(delimiter, "unicode_escape"))
-    with open(datafile, 'a', encoding='utf-8') as outputfile:
-        writer = csv.writer(outputfile, delimiter=delimiter, lineterminator='\n')
-        while True:
-            try:
-                pair = next(pair_iter)
-            except StopIteration:
-                break
-            try:
-                writer.writerow(pair)
-            except UnicodeEncodeError:
-                continue  # Ignore any lines with non-encodable strings in
+def write_pairs(datafile):
+    def decorator(function):
+        def wrapper(*args, **kwargs):
+            empty_file(datafile)
+
+            pairs = function(*args, **kwargs)
+            pair_iter = iter(pairs) if isinstance(pairs, list) else pairs
+
+            delimiter = str(codecs.decode('\t', "unicode_escape"))
+            with open(datafile, 'a', encoding="utf-8") as f:
+                writer = csv.writer(f, delimiter=delimiter, lineterminator='\n')
+                while True:
+                    try:
+                        pair = next(pair_iter)
+                        writer.writerow(pair)
+                    except UnicodeEncodeError:
+                        continue
+                    except StopIteration:
+                        break  # Have reached end of iterator, stop.
+        return wrapper
+    return decorator
 
 
-def write_pairs_from_list_to_file(datafile: str, pairs: list):
-    delimiter = '\t'
-    # Unescape the delimiter
-    delimiter = str(codecs.decode(delimiter, "unicode_escape"))
-    with open(datafile, 'a', encoding='utf-8') as outputfile:
-        writer = csv.writer(outputfile, delimiter=delimiter, lineterminator='\n')
-        for pair in pairs:
-            writer.writerow(pair)
+@write_pairs("data/formatted_lines_combined.txt")
+def combine_datasets(*datafiles):
+    print(f"Combining {', '.join([file.split('/')[-1] for file in datafiles])}...")
+    return load_tsv_files(*datafiles, delimiter='\t')
 
 
-def empty_formatted_lines_file(path):
-    print(f"Emptying {path}")
-    open(path, 'w').close()
-
-
-# get_full_path = lambda files, path: [os.path.join(path, file) for file in files]
+def empty_file(filepath):
+    if os.path.exists(filepath):
+        print(f"Emptying {filepath}")
+        open(filepath, 'w').close()
 
 
 ############################################
 # Amazon QA Dataset                        #
 ############################################
 
-
+@write_pairs("data/formatted_lines_amazon.txt")
 def load_amazon_dataset(path_to_datafiles):
     print("Loading Amazon dataset...")
     _, _, filenames = next(os.walk(path_to_datafiles))
@@ -88,7 +94,7 @@ def load_amazon_dataset(path_to_datafiles):
     sa_lines = load_files(*single_answers, open_func=gzip.open, line_eval_func=eval)
     ma_pairs = format_multiple_answer_amazon_data(ma_lines)
     sa_pairs = format_single_answer_amazon_data(sa_lines)
-    return ma_pairs, sa_pairs
+    return chain(ma_pairs, sa_pairs)
 
 
 def format_single_answer_amazon_data(line_it):
@@ -142,7 +148,6 @@ def load_convai_dataset(path_to_datafiles):
 # Squad Train Dataset                      #
 ############################################
 
-
 def load_squad_train_dataset(path_to_datafiles):
     # FIXME
     print("Loading Squad Train dataset")
@@ -155,7 +160,7 @@ def load_squad_train_dataset(path_to_datafiles):
 # Opensubtitles Dataset                    #
 ############################################
 
-
+@write_pairs("data/formatted_lines_opensubtitles.txt")
 def load_opensubtitles_dataset(path_to_datafiles):
     # TODO
     print("Loading Opensubtitles dataset...")
@@ -177,7 +182,7 @@ def load_opensubtitles_dataset(path_to_datafiles):
 # Cornell Dataset                          #
 ############################################
 
-
+@write_pairs("data/formatted_lines_cornell.txt")
 def load_cornell_dataset(path_to_datafiles):
     print("Loading Cornell dataset...")
     MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
@@ -242,7 +247,7 @@ def extractSentencePairs(conversations):
 # Cornell Dataset                          #
 ############################################
 
-
+@write_pairs("data/formatted_lines_qa.txt")
 def load_QA_dataset(path_to_datafiles):
     print("Loading QA dataset...")
     _, dirs, _ = next(os.walk(path_to_datafiles))
@@ -264,7 +269,7 @@ def load_QA_dataset(path_to_datafiles):
 # Twitter Customer Support Dataset         #
 ############################################
 
-
+@write_pairs("data/formatted_lines_twitter.txt")
 def load_twitter_dataset(path_to_datafiles):
     print("Loading Twitter Customer Support dataset...")
     _, _, filenames = next(os.walk(path_to_datafiles))
@@ -297,9 +302,8 @@ def load_twitter_dataset(path_to_datafiles):
 
 
 ############################################
-# Testing Section                          #
+# Reddit Dataset                           #
 ############################################
-
 
 def load_reddit_dataset(path_to_datafiles):
     print("Loading Reddit dataset...")
@@ -307,7 +311,7 @@ def load_reddit_dataset(path_to_datafiles):
     files = [os.path.join(path_to_datafiles, f) for f in filenames]
     datafiles = filter(lambda f: '.gz' in f, files)
     lines = load_files(*datafiles, open_func=gzip.open, line_eval_func=json.loads)
-    for _ in range(5):
+    for _ in range(2):
         try:
             line = next(lines)
         except StopIteration:
@@ -319,7 +323,7 @@ def load_reddit_txt(path_to_datafiles):
     print("Loading Reddit dataset...")
     datafile = os.path.join(path_to_datafiles, "RS_2011-01")
     lines = load_files(datafile, line_eval_func=json.loads)
-    for _ in range(5):
+    for _ in range(2):
         try:
             line = next(lines)
         except StopIteration:
@@ -331,26 +335,8 @@ def load_reddit_txt(path_to_datafiles):
 # Testing Section                          #
 ############################################
 
-
-now = datetime.now()
-timestamp = now.strftime("%d%m%y-%H%M%S")
-unique_file = f"data/formatted_lines-{timestamp}.txt"
-
-# empty_formatted_lines_file(unique_file)
-# ma_pairs, sa_pairs = load_amazon_dataset("data/amazon_qa")
-# write_pairs_from_iter_to_file(unique_file, ma_pairs)
-# write_pairs_from_iter_to_file(unique_file, sa_pairs)
-# # load_convai_dataset("data/convai_dataset")
-# # # load_squad_train_dataset("data/squad_train_dataset")
-# # # load_opensubtitles_dataset("data/opensubtitles")
-# cornell_pairs = load_cornell_dataset("data/cornell movie-dialogs corpus")
-# write_pairs_from_list_to_file(unique_file, cornell_pairs)
-# QA_pairs = load_QA_dataset("data/Question_Answer_Dataset_v1.2")
-# write_pairs_from_iter_to_file(unique_file, QA_pairs)
-# twitter_pairs = load_twitter_dataset("data/twitter_customer_support/twcs")
-# write_pairs_from_iter_to_file(unique_file, twitter_pairs)
-
-load_reddit_dataset("data/reddit_full_data")
-load_reddit_txt("data")
-
-# print(f"Loaded! Lines written to {unique_file}")
+# load_amazon_dataset("data/amazon_qa")
+# load_cornell_dataset("data/cornell movie-dialogs corpus")
+# load_QA_dataset("data/Question_Answer_Dataset_v1.2")
+# load_twitter_dataset("data/twitter_customer_support/twcs")
+combine_datasets("data/formatted_lines_cornell.txt", "data/formatted_lines_qa.txt")
