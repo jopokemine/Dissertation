@@ -5,6 +5,7 @@ import codecs
 import json
 import re
 from itertools import chain
+from .config import data, DATA_DIR
 
 
 ############################################
@@ -21,7 +22,6 @@ def load_files(*filepaths, open_func=open, line_eval_func=None):
 
 def load_tsv_files(*filepaths, delimiter=','):
     for file in filepaths:
-        print(f"    Loading {file.split('/')[-1]}...")
         with open(file) as f:
             read_csv = csv.reader(f, delimiter=delimiter)
             for line in read_csv:
@@ -67,7 +67,7 @@ def write_pairs(datafile):
     return decorator
 
 
-@write_pairs("data/formatted_lines_combined.txt")
+@write_pairs(os.path.join(DATA_DIR, "formatted_lines_combined.txt"))
 def combine_datasets(*datafiles):
     print(f"Combining {', '.join([file.split('/')[-1] for file in datafiles])}...")
     return load_tsv_files(*datafiles, delimiter='\t')
@@ -83,11 +83,11 @@ def empty_file(filepath):
 # Amazon QA Dataset                        #
 ############################################
 
-@write_pairs("data/formatted_lines_amazon.txt")
-def load_amazon_dataset(path_to_datafiles):
+@write_pairs(os.path.join(DATA_DIR, "formatted_lines_amazon.txt"))
+def load_amazon_dataset():
     print("Loading Amazon dataset...")
-    _, _, filenames = next(os.walk(path_to_datafiles))
-    filepaths = [os.path.join(path_to_datafiles, f) for f in filenames]
+    _, _, filenames = next(os.walk(data['amazon']))
+    filepaths = [os.path.join(data['amazon'], f) for f in filenames]
     multiple_answers = filter(lambda f: 'multiple' in f, filepaths)
     single_answers = filter(lambda f: 'multiple' not in f, filepaths)
     ma_lines = load_files(*multiple_answers, open_func=gzip.open, line_eval_func=eval)
@@ -121,11 +121,11 @@ def format_multiple_answer_amazon_data(line_it):
 # Convai Dataset                           #
 ############################################
 
-def load_convai_dataset(path_to_datafiles):
+def load_convai_dataset():
     # TODO: Finish
     print("Loading Convai dataset...")
-    _, _, filenames = next(os.walk(path_to_datafiles))
-    filepaths = [os.path.join(path_to_datafiles, f) for f in filenames]
+    _, _, filenames = next(os.walk(data['convai']))
+    filepaths = [os.path.join(data['convai'], f) for f in filenames]
     datafiles = filter(lambda f: 'data' in f, filepaths)
     lines = load_files(*datafiles, line_eval_func=json.load)
     line = next(lines)
@@ -148,11 +148,11 @@ def load_convai_dataset(path_to_datafiles):
 # Squad Train Dataset                      #
 ############################################
 
-def load_squad_train_dataset(path_to_datafiles):
+def load_squad_train_dataset():
     # FIXME
     print("Loading Squad Train dataset")
-    _, _, filenames = next(os.walk(path_to_datafiles))
-    objs = load_files(*[os.path.join(path_to_datafiles, f) for f in filenames])
+    _, _, filenames = next(os.walk(data['squad']))
+    objs = load_files(*[os.path.join(data['squad'], f) for f in filenames])
     print(next(objs))
 
 
@@ -160,14 +160,14 @@ def load_squad_train_dataset(path_to_datafiles):
 # Opensubtitles Dataset                    #
 ############################################
 
-@write_pairs("data/formatted_lines_opensubtitles.txt")
-def load_opensubtitles_dataset(path_to_datafiles):
+# @write_pairs(os.path.join(DATA_DIR, "formatted_lines_opensubtitles.txt"))
+def load_opensubtitles_dataset():
     # TODO
     print("Loading Opensubtitles dataset...")
-    _, _, filenames = next(os.walk(path_to_datafiles))
-    filepaths = [os.path.join(path_to_datafiles, f) for f in filenames]
+    _, _, filenames = next(os.walk(data['opensubtitles']))
+    filepaths = [os.path.join(data['opensubtitles'], f) for f in filenames]
     datafiles = filter(lambda f: '.gz' not in f, filepaths)
-    lines = load_files(path_to_datafiles, *datafiles)
+    lines = load_files(*datafiles)
     i = 0
     while i < 50:
         try:
@@ -182,13 +182,13 @@ def load_opensubtitles_dataset(path_to_datafiles):
 # Cornell Dataset                          #
 ############################################
 
-@write_pairs("data/formatted_lines_cornell.txt")
-def load_cornell_dataset(path_to_datafiles):
+@write_pairs(os.path.join(DATA_DIR, "formatted_lines_cornell.txt"))
+def load_cornell_dataset():
     print("Loading Cornell dataset...")
     MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
     MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
-    lines = loadLines(os.path.join(path_to_datafiles, "movie_lines.txt"), MOVIE_LINES_FIELDS)
-    conversations = loadConversations(os.path.join(path_to_datafiles, "movie_conversations.txt"),
+    lines = loadLines(os.path.join(data['cornell'], "movie_lines.txt"), MOVIE_LINES_FIELDS)
+    conversations = loadConversations(os.path.join(data['cornell'], "movie_conversations.txt"),
                                       lines, MOVIE_CONVERSATIONS_FIELDS)
     pairs = extractSentencePairs(conversations)
     return pairs
@@ -244,17 +244,17 @@ def extractSentencePairs(conversations):
 
 
 ############################################
-# Cornell Dataset                          #
+# QA Dataset                               #
 ############################################
 
-@write_pairs("data/formatted_lines_qa.txt")
-def load_QA_dataset(path_to_datafiles):
+@write_pairs(os.path.join(DATA_DIR, "formatted_lines_qa.txt"))
+def load_QA_dataset():
     print("Loading QA dataset...")
-    _, dirs, _ = next(os.walk(path_to_datafiles))
+    _, dirs, _ = next(os.walk(data['qa']))
     datafiles = []
     for d in dirs:
-        _, _, filenames = next(os.walk(os.path.join(path_to_datafiles, d)))
-        datafiles.extend([os.path.join(path_to_datafiles, d, f) for f in filenames])
+        _, _, filenames = next(os.walk(os.path.join(data['qa'], d)))
+        datafiles.extend([os.path.join(data['qa'], d, f) for f in filenames])
     lines = load_csv_files(*datafiles, delimiter="\t")
     while True:
         try:
@@ -269,11 +269,11 @@ def load_QA_dataset(path_to_datafiles):
 # Twitter Customer Support Dataset         #
 ############################################
 
-@write_pairs("data/formatted_lines_twitter.txt")
-def load_twitter_dataset(path_to_datafiles):
+@write_pairs(os.path.join(DATA_DIR, "formatted_lines_twitter.txt"))
+def load_twitter_dataset():
     print("Loading Twitter Customer Support dataset...")
-    _, _, filenames = next(os.walk(path_to_datafiles))
-    datafiles = [os.path.join(path_to_datafiles, file) for file in filenames]
+    _, _, filenames = next(os.walk(data['twitter']))
+    datafiles = [os.path.join(data['twitter'], file) for file in filenames]
     lines = load_csv_files(*datafiles)
     responses = {}
     in_response_to = {}
@@ -335,8 +335,18 @@ def load_reddit_txt(path_to_datafiles):
 # Testing Section                          #
 ############################################
 
-# load_amazon_dataset("data/amazon_qa")
-# load_cornell_dataset("data/cornell movie-dialogs corpus")
-# load_QA_dataset("data/Question_Answer_Dataset_v1.2")
-# load_twitter_dataset("data/twitter_customer_support/twcs")
-combine_datasets("data/formatted_lines_cornell.txt", "data/formatted_lines_qa.txt")
+
+############################################
+# Export Functions                         #
+############################################
+
+load_funcs = {
+    "amazon": load_amazon_dataset,
+    "convai": load_convai_dataset,
+    "twitter": load_twitter_dataset,
+    "squad": load_squad_train_dataset,
+    "opensubtitles": load_opensubtitles_dataset,
+    "cornell": load_cornell_dataset,
+    "qa": load_QA_dataset,
+    "reddit": load_reddit_dataset
+}
