@@ -2,6 +2,7 @@
 
 const sendBtnClickListener = async () => {
     const msg = document.getElementById('msgTxt').value
+    const datasets = "cornell"
 
     const response = await fetch('/chatbot', {
         method: 'POST',
@@ -10,13 +11,14 @@ const sendBtnClickListener = async () => {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            msg
+            msg,
+            datasets
         })
     });
     if (response.ok) {
         const data = await response.json();
         // console.log(await data);
-        document.getElementById("botMsg").textContent = data;
+        document.getElementById('botMsg').textContent = data;
     }
 }
 
