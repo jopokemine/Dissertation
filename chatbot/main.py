@@ -13,7 +13,6 @@ def parse():
     parser = argparse.ArgumentParser(description='Attention Seq2Seq Chatbot')
     parser.add_argument('-tr', '--train', action="store_true", default=False, help='Train the model with corpus')
     parser.add_argument('-te', '--test', action="store_true", default=False, help='Test the saved model')
-    # parser.add_argument('-it', '--iteration', type=int, default=10000, help='Train the model with [it] iterations')
     dataset_arg = parser.add_argument('-d', '--dataset', default='cornell', help='Comma separated list of dataset(s) to use. Options (case-sensitive) are: amazon, cornell, convai, opensubtitles, QA, rsics, reddit, twitter, ubuntu, squad')
 
     args = parser.parse_args()
@@ -27,21 +26,7 @@ def parse():
     if args.train and args.test:
         parser.error("Cannot have both -tr and -te")
 
-    if not args.train and not args.test:
-        parser.error("Must have either -tr or -te")
-
     return args
-
-
-# def parseFilename(filename, test=False):
-#     filename = filename.split('/')
-#     dataType = filename[-1][:-4]  # remove '.tar'
-#     parse = dataType.split('_')
-#     reverse = 'reverse' in parse
-#     layers, hidden = filename[-2].split('_')
-#     n_layers = int(layers.split('-')[0])
-#     HIDDEN_SIZE = int(hidden)
-#     return n_layers, HIDDEN_SIZE, reverse
 
 
 def _load_datasets(datasets: list) -> None:
@@ -56,13 +41,6 @@ def _load_datasets(datasets: list) -> None:
 
 
 def _build_encoder_decoder(voc: Voc, device, loadFilename=None):
-    # Set checkpoint to load from; set to None if starting from scratch
-    # loadFilename = None
-    # checkpoint_iter = 1000
-    # loadFilename = os.path.join(SAVE_DIR, MODEL_NAME, corpus_name,
-    #                             '{}-{}_{}'.format(ENCODER_N_LAYERS, DECODER_N_LAYERS, HIDDEN_SIZE),
-    #                             '{}_checkpoint.tar'.format(checkpoint_iter))
-
     # Load model if a loadFilename is provided
     encoder_optimizer_sd = decoder_optimizer_sd = None
 
@@ -102,9 +80,7 @@ def init_chatbot(datasets: str, load_from_file: bool = False):
     print(f"Device: {'cuda' if USE_CUDA else 'cpu'}")
     device = torch.device("cuda" if USE_CUDA else "cpu")
 
-    # datasets = "cornell movie-dialogs corpus"
-
-    # Define path to new file
+    # Define path to data file
     datafile = os.path.join(DATA_DIR, "formatted_lines_combined.txt")
 
     SAVE_DIR = os.path.join(DATA_DIR, "save")
@@ -151,60 +127,38 @@ def evaluate_sentence(encoder: EncoderRNN, decoder: LuongAttnDecoderRNN,
 
 
 def run(args: dict) -> None:
-    # N_ITERATION = args.iteration
     datasets = args.dataset.split(',') if ',' in args.dataset else [args.dataset]
     datasets = [d.lower() for d in datasets]
 
     _load_datasets(datasets)
     datasets_str = '-'.join(datasets)
 
-    voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer, embedding, loadFilename = init_chatbot(datasets_str, args.test)
+    if args.train or args.test:
+        voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer, embedding, loadFilename = init_chatbot(datasets_str, args.test)
 
     # Run training iterations
-    print("Starting Training!")
-    trainIters(MODEL_NAME, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, ENCODER_N_LAYERS, DECODER_N_LAYERS, SAVE_DIR, N_ITERATION, BATCH_SIZE,
-               PRINT_EVERY, SAVE_EVERY, CLIP, datasets_str, loadFilename)
+    if args.train:
+        print("Starting Training!")
+        trainIters(MODEL_NAME, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
+                   embedding, ENCODER_N_LAYERS, DECODER_N_LAYERS, SAVE_DIR, N_ITERATION, BATCH_SIZE,
+                   PRINT_EVERY, SAVE_EVERY, CLIP, datasets_str, loadFilename)
 
     ############################################
     # RUN EVALUATION ###########################
     ############################################
 
-    # Set DROPOUT layers to eval mode
-    encoder.eval()
-    decoder.eval()
+    if args.test:
+        # Set DROPOUT layers to eval mode
+        encoder.eval()
+        decoder.eval()
 
-    # Initialize search module
-    searcher = GreedySearchDecoder(encoder, decoder)
+        # Initialize search module
+        searcher = GreedySearchDecoder(encoder, decoder)
 
-    # Begin chatting (uncomment and run the following line to begin)
-    evaluateInput(encoder, decoder, searcher, voc)
-
-    # if not (set(datasets) <= set(load_funcs.keys())):
-    #     diff = np.setdiff1d(datasets, load_funcs.keys())
-    #     raise ArgumentError(args.dataset, f"Invalid dataset(s): {diff}")
-    # for dataset in datasets:
-    #     if dataset not in load_funcs.keys():
-    #         raise ArgumentError("Invalid dataset")
-
-    # reverse, _, N_ITERATION, PRINT_EVERY, SAVE_EVERY, LEARNING_RATE, \
-    #     n_layers, HIDDEN_SIZE, BATCH_SIZE, beam_size, inp, DROPOUT = \
-    #     args.reverse, args.filter, args.iteration, args.print, args.save, args.LEARNING_RATE, \
-    #     args.layer, args.hidden, args.BATCH_SIZE, args.beam, args.input, args.DROPOUT
-    # if args.train and not args.load:
-    #     trainIters(args.train, reverse, N_ITERATION, LEARNING_RATE, BATCH_SIZE,
-    #                n_layers, HIDDEN_SIZE, PRINT_EVERY, SAVE_EVERY, DROPOUT)
-    # elif args.load:
-    #     n_layers, HIDDEN_SIZE, reverse = parseFilename(args.load)
-    #     trainIters(args.train, reverse, N_ITERATION, LEARNING_RATE, BATCH_SIZE,
-    #                n_layers, HIDDEN_SIZE, PRINT_EVERY, SAVE_EVERY, DROPOUT, loadFilename=args.load)
-    # elif args.test:
-    #     n_layers, HIDDEN_SIZE, reverse = parseFilename(args.test, True)
-    #     runTest(n_layers, HIDDEN_SIZE, reverse, args.test, beam_size, inp, args.corpus)
+        # Begin chatting (uncomment and run the following line to begin)
+        evaluateInput(encoder, decoder, searcher, voc)
 
 
 if __name__ == '__main__':
     args = parse()
     run(args)
-
-# %%
