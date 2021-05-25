@@ -13,7 +13,8 @@ data = {
     'rsics': os.path.join(DATA_DIR, 'rsics_dataset'),
     'reddit': os.path.join(DATA_DIR, 'reddit_full_data'),
     'twitter': os.path.join(DATA_DIR, 'twitter_customer_support/twcs'),
-    'ubuntu': os.path.join(DATA_DIR, 'ubuntu_dialogue_corpus/Ubuntu-dialogue-corpus')
+    'ubuntu': os.path.join(DATA_DIR, 'ubuntu_dialogue_corpus/Ubuntu-dialogue-corpus'),
+    'squad': os.path.join(DATA_DIR, 'squad_train_dataset')
 }
 
 ################################
@@ -36,6 +37,6 @@ CLIP = 50.0
 TEACHER_FORCING_RATIO = 1.0
 LEARNING_RATE = 0.0001
 DECODER_LEARNING_RATIO = 5.0
-N_ITERATION = 1000
+N_ITERATION = 4000
 PRINT_EVERY = 1
-SAVE_EVERY = 500
+SAVE_EVERY = 1000
