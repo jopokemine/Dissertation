@@ -1,6 +1,5 @@
-data*
-**/__pycache__/*
-.vscode/*
-.flake8/*
-.idea/*
-
+chatbot/data/*
+**/__pycache__
+.vscode
+.flake8
+.idea
