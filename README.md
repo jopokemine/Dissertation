@@ -14,7 +14,7 @@ First, download the repository:
 git clone https://github.com/jopokemine/Dissertation.git
 ```
 
-Next, you will need to download the datasets, which can be found under the datasets heading.
+Next, you will need to download the datasets, which can be found under the datasets heading. They should be placed in the folder `chatbot/data`.
 
 Once the datasets are installed into the datasets folder, run the following to train a chatbot:
 ```
