@@ -12,7 +12,18 @@ from .config import data, DATA_DIR
 # Generic                                  #
 ############################################
 
+
 def load_files(*filepaths, open_func=open, line_eval_func=None):
+    """Loads in dataset files, given filepaths, and optional open and evaluation functions.
+
+    Args:
+        filepaths (str): relative filepaths to the datafiles to be loaded.
+        open_func (func, optional): Function to open the file, should 'open' not be sufficient. Defaults to open.
+        line_eval_func (func, optional): Function to further process the data loaded before it is yielded. Defaults to None.
+
+    Yields:
+        iterator: Iterator of the line loaded.
+    """
     # open_func allows for different open funcitons, in case the built-in open() funciton is not enough
     # line_eval_func is optional, and allows some evaluation before return. Mostly used for JSON files, where json.loads() is needed
     for file in filepaths:
@@ -23,6 +34,15 @@ def load_files(*filepaths, open_func=open, line_eval_func=None):
 
 
 def load_csv_files(*filepaths, delimiter=','):
+    """Loads in csv files, given filepaths and an optional delimiter.
+
+    Args:
+        filepaths (str): relative filepaths to the datafiles to be loaded.
+        delimiter (str, optional): Delimiter to use to load csv file. Defaults to ','.
+
+    Yields:
+        iterator: Iterator containing the lines
+    """
     for file in filepaths:
         print(f"    Loading {file.split('/')[-1]}...")
         with open(file, mode="rb") as f:
@@ -39,6 +59,14 @@ def load_csv_files(*filepaths, delimiter=','):
 
 
 def load_tsv_files(*filepaths, delimiter=','):
+    """Simpler function for loading csv files, without as much protection against Unicode characters. Used for loading 'formatted_lines_*' files only.
+
+    Args:
+        delimiter (str, optional): Delimiter to be used to load csv files. Defaults to ','.
+
+    Yields:
+        iterator: Iterator containing the lines
+    """
     for file in filepaths:
         with open(file) as f:
             read_csv = csv.reader(f, delimiter=delimiter)
@@ -47,6 +75,11 @@ def load_tsv_files(*filepaths, delimiter=','):
 
 
 def write_pairs(datafile):
+    """Decorator function that will take the data returned from a function, and write it to the specified file.
+
+    Args:
+        datafile (str): Relative path to the file to be written.
+    """
     def decorator(function):
         def wrapper(*args, **kwargs):
             empty_file(datafile)
@@ -72,11 +105,21 @@ def write_pairs(datafile):
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_combined.txt"))
 def combine_datasets(*datafiles):
+    """Simple function to combine two csv files together. Used to combine the output from multiple datasets into one file.
+
+    Returns:
+        iterator: Iterator of data to be written by write_pairs decorator.
+    """
     print(f"Combining {', '.join([file.split('/')[-1] for file in datafiles])}...")
     return load_tsv_files(*datafiles, delimiter='\t')
 
 
 def empty_file(filepath):
+    """Empties the specified file, without deleting it.
+
+    Args:
+        filepath (str): Relative path to file to be emptied.
+    """
     if os.path.exists(filepath):
         print(f"Emptying {filepath}")
         open(filepath, 'w').close()
@@ -88,6 +131,12 @@ def empty_file(filepath):
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_amazon.txt"))
 def load_amazon_dataset():
+    """Function to load Amazon_QA dataset. Credit for the dataset:
+    Henderson, M., Budzianowski, P., Casanueva, I., Coope, S., Gerz, D., Kumar,G., Mrkši ́c, N., Spithourakis, G., Su, P.-H., Vulic, I., & Wen, T.-H. (2019). A repository of conversational datasets [Data available at github.com/PolyAI-LDN/conversational-datasets]. Proceedings of the Workshop on NLP for Conversational AI. https://arxiv.org/abs/1904.06472. License: Apache License, Version 2.0.
+
+    Returns:
+        iterator: iterator of data to be written by write_pairs decorator.
+    """
     print("Loading Amazon dataset...")
     _, _, filenames = next(os.walk(data['amazon']))
     filepaths = [os.path.join(data['amazon'], f) for f in filenames]
@@ -101,6 +150,14 @@ def load_amazon_dataset():
 
 
 def format_single_answer_amazon_data(line_it):
+    """Function to format a single answer dictionary into a usable sentence pair.
+
+    Args:
+        line_it (iterator): Iterator containing dictionary objects of question and answer.
+
+    Yields:
+        iterator: Iterator of lists of sentence pairs.
+    """
     while True:
         try:
             obj = next(line_it)
@@ -110,6 +167,13 @@ def format_single_answer_amazon_data(line_it):
 
 
 def format_multiple_answer_amazon_data(line_it):
+    """Function to format a multiple answer dictionary into usable sentence pairs.
+
+    Args:
+        line_it (iterator): Iterator containing dictionary objects of questions and answers.
+    Yields:
+        iterator: Iterator of lists of sentence pairs.
+    """
     while True:
         try:
             obj = next(line_it)
@@ -126,6 +190,12 @@ def format_multiple_answer_amazon_data(line_it):
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_convai.txt"))
 def load_convai_dataset():
+    """Function to load Convai dataset. Credit for the dataset:
+    Aliannejadi, M., Kiseleva, J., Chuklin, A., Dalton, J., & Burtsev, M. (2020). Con-vAI3: Generating Clarifying Questions for Open-Domain Dialogue Systems (ClariQ). https://arxiv.org/abs/2009.11352.
+
+    Yields:
+        iterator: iterator of data to be written by write_pairs decorator.
+    """
     print("Loading Convai dataset...")
     _, _, filenames = next(os.walk(data['convai']))
     filepaths = [os.path.join(data['convai'], f) for f in filenames]
@@ -157,6 +227,12 @@ def load_convai_dataset():
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_squad.txt"))
 def load_squad_train_dataset():
+    """Function to load SQuAD dataset. Credit for the dataset:
+    Rajpurkar, P., Jia, R., & Liang, P. (2018). Know What You Don’t Know: Unanswerable Questions for SQuAD. CoRR,abs/1806.03822. https://arxiv.org/abs/1806.03822.
+
+    Yields:
+        iterator: iterator of data to be written by write_pairs decorator.
+    """
     print("Loading Squad Train dataset")
     _, _, filenames = next(os.walk(data['squad']))
     objs = load_files(*[os.path.join(data['squad'], f) for f in filenames], line_eval_func=json.loads)
@@ -174,6 +250,12 @@ def load_squad_train_dataset():
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_opensubtitles.txt"))
 def load_opensubtitles_dataset():
+    """Function to load OpenSubtitles dataset. Credit for the dataset:
+    Henderson, M., Budzianowski, P., Casanueva, I., Coope, S., Gerz, D., Kumar,G., Mrkši ́c, N., Spithourakis, G., Su, P.-H., Vulic, I., & Wen, T.-H. (2019). A repository of conversational datasets [Data available at github.com/PolyAI-LDN/conversational-datasets]. Proceedings of the Workshop on NLP for Conversational AI. https://arxiv.org/abs/1904.06472. License: Apache License, Version 2.0.
+
+    Yields:
+        iterator: iterator of data to be written by write_pairs decorator.
+    """
     print("Loading Opensubtitles dataset...")
     _, _, filenames = next(os.walk(data['opensubtitles']))
     filepaths = [os.path.join(data['opensubtitles'], f) for f in filenames]
@@ -192,8 +274,19 @@ def load_opensubtitles_dataset():
 # Cornell Dataset                          #
 ############################################
 
+"""
+Credit for the code for this section goes to: Inkawhich, M. (2017).Chatbot Tutorial – PyTorch Tutorials 1.8.1+cu102 doc-umentation. Retrieved December 3, 2020, from https://pytorch.org/tutorials/beginner/chatbot_tutorial.html?highlight=chatbot.
+"""
+
+
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_cornell.txt"))
 def load_cornell_dataset():
+    """Function to load Cornell dataset. Credit for dataset:
+    Danescu-Niculescu-Mizil, C., & Lee, L. (2011). Chameleons in imagined conversations: A new approach to understanding coordination of linguisticstyle in dialogs.Proceedings of the Workshop on Cognitive Modelingand Computational Linguistics, ACL 2011.
+
+    Returns:
+        list: list of lists of sentence pairs.
+    """
     print("Loading Cornell dataset...")
     MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
     MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
@@ -259,6 +352,12 @@ def extractSentencePairs(conversations):
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_qa.txt"))
 def load_QA_dataset():
+    """Function to load QA dataset. Credit for the dataset:
+    Smith, N. A., Heilman, M., & Hwa, R. (2008). Question generation as a competitive undergraduate course project. Proceedings of the NSF Workshopon the Question Generation Shared Task and Evaluation Challenge, 4–6.
+
+    Yields:
+        iterator: iterator of data to be written by write_pairs decorator.
+    """
     print("Loading QA dataset...")
     _, dirs, _ = next(os.walk(data['qa']))
     datafiles = []
@@ -281,6 +380,12 @@ def load_QA_dataset():
 
 @write_pairs(os.path.join(DATA_DIR, "formatted_lines_twitter.txt"))
 def load_twitter_dataset():
+    """Function to load Twitter Customer Service dataset. Credit for the dataset:
+    Axelbrooke, S. (2017).Customer Support on Twitter(Version 10). RetrievedJanuary 5, 2021, from https://www.kaggle.com/thoughtvector/customer-support-on-twitter/version/10. License: Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0).
+
+    Yields:
+        iterator: iterator of data to be written by write_pairs decorator.
+    """
     print("Loading Twitter Customer Support dataset...")
     _, _, filenames = next(os.walk(data['twitter']))
     datafiles = [os.path.join(data['twitter'], file) for file in filenames]
@@ -316,7 +421,9 @@ def load_twitter_dataset():
 ############################################
 
 def load_reddit_dataset():
-    # TODO
+    """UNFINISHED: Function to load Reddit dataset. Credit for the dataset:
+    Henderson, M., Budzianowski, P., Casanueva, I., Coope, S., Gerz, D., Kumar,G., Mrkši ́c, N., Spithourakis, G., Su, P.-H., Vulic, I., & Wen, T.-H. (2019). A repository of conversational datasets [Data available at github.com/PolyAI-LDN/conversational-datasets]. Proceedings of the Workshop on NLP for Conversational AI. https://arxiv.org/abs/1904.06472. License: Apache License, Version 2.0.
+    """
     print("Loading Reddit dataset...")
     _, _, filenames = next(os.walk(data['reddit']))
     files = [os.path.join(data['reddit'], f) for f in filenames]
@@ -332,19 +439,6 @@ def load_reddit_dataset():
         print(line['selftext'])
         print('-------------------------')
         # print(line.keys(), end="\n\n\n")
-
-
-def load_reddit_txt():
-    # TODO
-    print("Loading Reddit dataset...")
-    datafile = os.path.join(data['reddit'], "RS_2011-01")
-    lines = load_files(datafile, line_eval_func=json.loads)
-    for _ in range(2):
-        try:
-            line = next(lines)
-        except StopIteration:
-            break
-        print(line.keys(), end="\n\n\n")
 
 
 ############################################

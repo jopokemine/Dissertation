@@ -10,6 +10,14 @@ from .bot import loadPrepareData, EncoderRNN, LuongAttnDecoderRNN, trainIters, e
 
 
 def parse():
+    """Will parse the arguments received from the user, throwing an error if they are unacceptable.
+
+    Raises:
+        argparse.ArgumentError: Argument error raised should the user use the arguments incorrectly
+
+    Returns:
+        dict: A dictionary containing the argument values, for use elsewhere.
+    """
     parser = argparse.ArgumentParser(description='Attention Seq2Seq Chatbot')
     parser.add_argument('-tr', '--train', action="store_true", default=False, help='Train the model with corpus')
     parser.add_argument('-te', '--test', action="store_true", default=False, help='Test the saved model')
@@ -29,7 +37,12 @@ def parse():
     return args
 
 
-def _load_datasets(datasets: list) -> None:
+def _load_datasets(datasets: list):
+    """Will load the specified datasets into one combined datafile, ready for the chatbot to train.
+
+    Args:
+        datasets (list): List of datasets to load.
+    """
     for dataset in datasets:
         load_funcs[dataset]()
 
@@ -41,6 +54,20 @@ def _load_datasets(datasets: list) -> None:
 
 
 def _build_encoder_decoder(voc: Voc, device, loadFilename=None):
+    """Builds the encoder and decoder for the chatbot.
+
+    Args:
+        voc (Voc): Voc object used to train chatbot
+        device (str): Device used to train chatbot.
+        loadFilename (str, optional): Filepath of previous chatbot, should a chatbot need to be loaded for testing. None indicated a new chatbot will be trained instead. Defaults to None.
+
+    Returns:
+        nn.Embedding: Embedding for chatbot
+        EncoderRNN: Encoder to encode chatbot's input
+        LuongAttnDecoderRNN: Decoder to decode chatbot's output
+        object: encoder optimizer for evaluating a chatbot
+        object: decoder optimizer for evaluating a chatbot
+    """
     # Load model if a loadFilename is provided
     encoder_optimizer_sd = decoder_optimizer_sd = None
 
@@ -76,6 +103,15 @@ def _build_encoder_decoder(voc: Voc, device, loadFilename=None):
 
 
 def init_chatbot(datasets: str, load_from_file: bool = False):
+    """Function to initiate a chatbot, both for a new chatbot and for a pre-trained one.
+
+    Args:
+        datasets (str): comma seperated lsit of the datasets to use.
+        load_from_file (bool, optional): Tells the function whether to create a chatbot from scratch (False), or whether to evaluate a pre-trained model (True). Defaults to False.
+
+    Returns:
+        tuple: A tuple of variables useful in other functions.
+    """
     USE_CUDA = torch.cuda.is_available()
     print(f"Device: {'cuda' if USE_CUDA else 'cpu'}")
     device = torch.device("cuda" if USE_CUDA else "cpu")
@@ -117,6 +153,17 @@ def init_chatbot(datasets: str, load_from_file: bool = False):
 
 def evaluate_sentence(encoder: EncoderRNN, decoder: LuongAttnDecoderRNN,
                       voc: Voc, sentence: str):
+    """Function to tell a chatbot to evaluate the given sentence, and generate a response.
+
+    Args:
+        encoder (EncoderRNN): Encoder for the chatbot.
+        decoder (LuongAttnDecoderRNN): Decoder for the chatbot.
+        voc (Voc): Voc for the chatbot.
+        sentence (str): Sentence to evaluate.
+
+    Returns:
+        str: The chatbot's generated output.
+    """
     encoder.eval()
     decoder.eval()
     searcher = GreedySearchDecoder(encoder, decoder)
@@ -126,7 +173,12 @@ def evaluate_sentence(encoder: EncoderRNN, decoder: LuongAttnDecoderRNN,
     return ' '.join(output_words)
 
 
-def run(args: dict) -> None:
+def run(args: dict):
+    """Run the chatbot script
+
+    Args:
+        args (dict): Arguments passed to the script from the user.
+    """
     datasets = args.dataset.split(',') if ',' in args.dataset else [args.dataset]
     datasets = [d.lower() for d in datasets]
 

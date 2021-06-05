@@ -1,3 +1,14 @@
+"""Credit for most of this code goes to Matthew Inkawhich, for the majority
+of this source code.
+
+Inkawhich, M. Chatbot Tutorial — PyTorch Tutorials 1.8.1+cu102 documentation. Pytorch.org. Retrieved 25 May 2021, from https://pytorch.org/tutorials/beginner/chatbot_tutorial.html?highlight=chatbot.
+
+This script will create, or load, a chatbot based on the config options
+found in 'config.py', and the options passed to the script from the 
+user input, via 'main.py'.
+"""
+
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
