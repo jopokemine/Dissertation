@@ -1,3 +1,4 @@
+// UNUSED IN FINAL PROJECT
 'use strict';
 
 const sendBtnClickListener = async () => {

@@ -1,3 +1,5 @@
+# UNUSED IN FINAL PROJECT!
+
 from flask import Flask, render_template, jsonify, request
 # import bot
 from chatbot.main import init_chatbot, evaluate_sentence
