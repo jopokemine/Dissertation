@@ -1,8 +1,8 @@
 import os
 
 # MAX_LENGTH = 15
-DATA_DIR = os.path.join("chatbot", "data.nosync")
-# DATA_DIR = "data.nosync"
+DATA_DIR = os.path.join("chatbot", "data")
+# DATA_DIR = "data"
 SAVE_DIR = os.path.join(DATA_DIR, "save")
 data = {
     'amazon': os.path.join(DATA_DIR, 'amazon_qa'),
