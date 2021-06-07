@@ -45,3 +45,5 @@ The available datasets, and where to get them, are:
 - - Credit: Axelbrooke, S. (2017).Customer Support on Twitter(Version 10). RetrievedJanuary 5, 2021, from https://www.kaggle.com/thoughtvector/customer-support-on-twitter/version/10. License: Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0).
 
 *Note*: Due to difficulties sensibly creating sentence pairs from the data available, the Reddit dataset remains unfinished!
+
+A shared Google Drive Folder containing the code and the datasets can be found [here](https://drive.google.com/drive/folders/1nOfxTrZ6EhZnA72mW_hqlr9aQSYgu8H1?usp=sharing)
