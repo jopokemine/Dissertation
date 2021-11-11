@@ -1,4 +1,5 @@
 chatbot/data/*
+!chatbot/data/cornell*
 **/__pycache__
 .vscode
 .flake8
