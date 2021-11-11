@@ -4,7 +4,7 @@
 
 This project aims to answer the above question by subjecting multiple chatbots, trained over many different types of dataset, to the Implicit Association Test (IAT), which can be found [here](https://implicit.harvard.edu/implicit/). This repository shows the code used to load the datasets, train chatbots and test them, using an Textual User Interface (TUI).
 
-*Note*: The original research question for this project was "Can Adding Bias to a Machine Make it more believable?". As part of this, a basic Flask server was coded in order to later facilitate the completion of online Turing Tests to test the believability of the chatbots made. However, the research question changed before I had figured out how to use Flask properly, and thus well before this server was completed. The code has been left, as an insight into how the code was planned to be structured, and how I was learning Flask, before the change.
+_Note_: The original research question for this project was "Can Adding Bias to a Machine Make it more believable?". As part of this, a basic Flask server was coded in order to later facilitate the completion of online Turing Tests to test the believability of the chatbots made. However, the research question changed before I had figured out how to use Flask properly, and thus well before this server was completed. The code has been left, as an insight into how the code was planned to be structured, and how I was learning Flask, before the change.
 
 Because of the change the only files of note are in `main.py` and the `chatbot` folder, all other files were discontinued for this project!
 
@@ -12,7 +12,7 @@ Because of the change the only files of note are in `main.py` and the `chatbot` 
 
 First, download the repository:
 
-``` bash
+```bash
 git clone https://github.com/jopokemine/Dissertation.git
 ```
 
@@ -20,13 +20,13 @@ Next, you will need to download the datasets, which can be found under the datas
 
 Once the datasets are installed into the data folder, run the following to train a chatbot:
 
-``` bash
+```bash
 python3 main.py -tr -d [datasets]
 ```
 
 And the following to test a chatbot:
 
-``` bash
+```bash
 python3 main.py -te -d [datasets]
 ```
 
@@ -51,6 +51,6 @@ The available datasets, and where to get them, are:
 - Twitter [link](https://www.kaggle.com/thoughtvector/customer-support-on-twitter/version/10)
   - Credit: Axelbrooke, S. (2017).Customer Support on Twitter(Version 10). RetrievedJanuary 5, 2021, from <https://www.kaggle.com/thoughtvector/customer-support-on-twitter/version/10>. License: Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0).
 
-*Note*: Due to difficulties sensibly creating sentence pairs from the data available, the Reddit dataset remains unfinished!
+_Note_: Due to difficulties sensibly creating sentence pairs from the data available, the Reddit dataset remains unfinished!
 
 A shared Google Drive Folder containing the code and the datasets can be found [here](https://drive.google.com/drive/folders/1nOfxTrZ6EhZnA72mW_hqlr9aQSYgu8H1?usp=sharing)
